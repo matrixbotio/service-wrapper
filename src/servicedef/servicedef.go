@@ -1,7 +1,8 @@
 package servicedef
 
 import (
-    "os"
+	"os"
+
 	"gopkg.in/yaml.v2"
 )
 

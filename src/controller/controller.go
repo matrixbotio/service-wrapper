@@ -1,7 +1,7 @@
 package controller
 
 import (
-    "fmt"
+	"fmt"
 )
 
 type Button struct {
