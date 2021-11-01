@@ -7,9 +7,9 @@ import (
 )
 
 func check(e error) {
-    if e != nil {
-        panic(e)
-    }
+	if e != nil {
+		panic(e)
+	}
 }
 
 type processDef struct {
@@ -23,9 +23,9 @@ type processDef struct {
 func getProcessDefinition() processDef {
 	pdef := processDef{}
 	yamlData, err := os.ReadFile(os.Args[1])
-    check(err)
+	check(err)
 	err = yaml.Unmarshal([]byte(yamlData), &pdef)
-    check(err)
+	check(err)
 	return pdef
 }
 

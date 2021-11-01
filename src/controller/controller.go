@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+var statusCheckFunc func() (string, string, []File)
+
 type Button struct {
 	Text string
 	RMKeyOnClick bool
@@ -17,4 +19,8 @@ type File struct {
 
 func Send(text string, buttons []Button, files ...File) {
 	fmt.Println(text)
+}
+
+func OnStatusCheck(check func() (string, string, []File)) {
+	statusCheckFunc = check
 }
