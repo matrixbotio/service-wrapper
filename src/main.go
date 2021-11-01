@@ -12,14 +12,14 @@ import (
 )
 
 var state string
-var startTime = time.Now().Format(timeFormat)
+var startTime = ""
 
 func awaitRestartCommand(text string, files ...controller.File) {
 	promise.New(func(resolve func(v promise.Any), reject func(error)) {
 		controller.Send(text, []controller.Button{
 			{
 				Text:         "🔄 Рестарт",
-				RMKeyOnClick: true,
+				RMMsgsOnClick: true,
 				OnClick: func() {
 					resolve(nil)
 				},
@@ -48,13 +48,17 @@ func run() {
 		awaitRestartCommand(state)
 		return
 	}
+	state = "Запущен"
+	startTime = time.Now().Format(timeFormat)
 	files := readStdoutStderr(stdout, stderr)
 	waitErr := cmd.Wait()
 	if waitErr != nil {
+		startTime = ""
 		state = fmt.Sprintf("Процесс сервиса крашнулся: %v", waitErr)
 		awaitRestartCommand(state, files...)
 		return
 	}
+	startTime = ""
 	state = "Процесс сервиса успешно завершился. Этого не должно было случиться. Проверте вывод сервиса"
 	awaitRestartCommand(state, files...)
 }
@@ -62,7 +66,6 @@ func run() {
 func main() {
 	for{
 		state = "Запуск..."
-		startTime = time.Now().Format(timeFormat)
 		controller.OnStatusCheck(func() (string, string, []controller.File) {
 			return state, startTime, []controller.File{}
 		})

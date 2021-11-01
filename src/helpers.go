@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -48,25 +49,34 @@ func readData(readCloser io.ReadCloser, onNewLine func(string)) *promise.Promise
 
 func filesStdoutStderr(stdoutbuf []string, stderrbuf []string) []controller.File {
 	timestr := time.Now().Format(timeFormat)
-	return []controller.File{
-		{
+	files := []controller.File{}
+	stdout := strings.Join(stdoutbuf, "\n")
+	stderr := strings.Join(stderrbuf, "\n")
+	if len(stdout) > 0 {
+		files = append(files, controller.File{
 			Name: servicedef.ServiceName + " — " + timestr + ".stdout.txt",
-			Content: []byte(strings.Join(stdoutbuf, "\n")),
-		},
-		{
-			Name: servicedef.ServiceName + " — " + timestr + ".stderr.txt",
-			Content: []byte(strings.Join(stderrbuf, "\n")),
-		},
+			Content: strings.Join(stdoutbuf, "\n"),
+		})
 	}
+	if len(stderr) > 0 {
+		files = append(files, controller.File{
+			Name: servicedef.ServiceName + " — " + timestr + ".stderr.txt",
+			Content: strings.Join(stderrbuf, "\n"),
+		})
+	}
+	return files
 }
 
 func filesLinebuf(linebuf []string) []controller.File {
-	return []controller.File{
-		{
+	files := []controller.File{}
+	output := strings.Join(linebuf, "\n")
+	if len(output) > 0 {
+		files = append(files, controller.File{
 			Name: servicedef.ServiceName + " — " + time.Now().Format(timeFormat) + ".output.txt",
-			Content: []byte(strings.Join(linebuf, "\n")),
-		},
+			Content: strings.Join(linebuf, "\n"),
+		})
 	}
+	return files
 }
 
 func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.File {
@@ -77,8 +87,14 @@ func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.F
 			return state, startTime, filesStdoutStderr(stdoutbuf, stderrbuf)
 		})
 		promise.All(
-			readData(stdout, func(line string) { stdoutbuf = appendToLimitedArr(stdoutbuf, line, servicedef.LinesToPreserve) }),
-			readData(stderr, func(line string) { stderrbuf = appendToLimitedArr(stderrbuf, line, servicedef.LinesToPreserve) }),
+			readData(stdout, func(line string) {
+				os.Stdout.WriteString(line + "\n")
+				stdoutbuf = appendToLimitedArr(stdoutbuf, line, servicedef.LinesToPreserve)
+			}),
+			readData(stderr, func(line string) {
+				os.Stderr.WriteString(line + "\n")
+				stderrbuf = appendToLimitedArr(stderrbuf, line, servicedef.LinesToPreserve)
+			}),
 		).Await()
 		return filesStdoutStderr(stdoutbuf, stderrbuf)
 	} else {
@@ -87,8 +103,14 @@ func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.F
 			return state, startTime, filesLinebuf(linebuf)
 		})
 		promise.All(
-			readData(stdout, func(line string) { linebuf = appendToLimitedArr(linebuf, line, servicedef.LinesToPreserve) }),
-			readData(stderr, func(line string) { linebuf = appendToLimitedArr(linebuf, line, servicedef.LinesToPreserve) }),
+			readData(stdout, func(line string) {
+				os.Stdout.WriteString(line + "\n")
+				linebuf = appendToLimitedArr(linebuf, line, servicedef.LinesToPreserve)
+			}),
+			readData(stderr, func(line string) {
+				os.Stderr.WriteString(line + "\n")
+				linebuf = appendToLimitedArr(linebuf, line, servicedef.LinesToPreserve)
+			}),
 		).Await()
 		return filesLinebuf(linebuf)
 	}
