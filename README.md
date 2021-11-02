@@ -6,7 +6,7 @@
 
 ### Container preparation
 
-1. Download the binary from [Releases](/../../releases) page or build with `go build -o wrapper ./src`
+1. Download the binary from [Releases](/../../releases) page or build with `CGO_ENABLED=0 go build -o wrapper ./src`
 1. Copy the binary to docker container
 1. Create `service.yml` description file somewhere in the container. Example:
     ```yml
