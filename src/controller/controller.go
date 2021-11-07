@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,6 +40,14 @@ func check(e error) {
 	}
 }
 
+func getChatInt64() int64 {
+	i, err := strconv.ParseInt(chat.Id, 10, 64)
+	check(err)
+	return i
+}
+
+var chatIdInt64 = getChatInt64()
+
 func txtToHtml(text string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(text, "&", "&amp;"), "<", "&lt;"), ">", "&gt;")
 }
@@ -71,6 +80,9 @@ func initBot() *telebot.Bot {
 	})
 	check(err)
 	bot.Handle("/status", func(m *telebot.Message) {
+		if m.Chat.ID != chatIdInt64 {
+			return
+		}
 		messagesToDelete := []*telebot.Message{}
 		state, startTime, buttons, files := statusCheckFunc()
 		messageText := fmt.Sprintf("<b>Статус сервиса:</b> %s\n", txtToHtml(state))
