@@ -101,7 +101,7 @@ func initBot() *telebot.Bot {
 		})
 		messagesToDelete = append(messagesToDelete, msg)
 		if len(files) != 0 {
-			msgs, _ := bot.SendAlbum(chat, filesToTelebotAlbum(files, messageText), &telebot.SendOptions{
+			msgs, _ := bot.SendAlbum(chat, filesToTelebotAlbum(files), &telebot.SendOptions{
 				ReplyTo: msg,
 			})
 			for i := 0; i < len(msgs); i++ {
