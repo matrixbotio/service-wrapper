@@ -12,7 +12,10 @@ import (
 )
 
 var state string
+var cmd *exec.Cmd
 var startTime = ""
+var running = false
+var paused = false
 
 func awaitRestartCommand(text string, files ...controller.File) {
 	promise.New(func(resolve func(v promise.Any), reject func(error)) {
@@ -29,7 +32,7 @@ func awaitRestartCommand(text string, files ...controller.File) {
 }
 
 func run() {
-	cmd := exec.Command(servicedef.Command, servicedef.Args...)
+	cmd = exec.Command(servicedef.Command, servicedef.Args...)
 	stdout, stdoutPipeErr := cmd.StdoutPipe()
 	if stdoutPipeErr != nil {
 		state = fmt.Sprintf("Не удаётся передать stdout: %v", stdoutPipeErr)
@@ -49,9 +52,11 @@ func run() {
 		return
 	}
 	state = "Запущен"
+	running = true
 	startTime = time.Now().Format(timeFormat)
 	files := readStdoutStderr(stdout, stderr)
 	waitErr := cmd.Wait()
+	running = false
 	if waitErr != nil {
 		startTime = ""
 		state = fmt.Sprintf("Процесс сервиса крашнулся: %v", waitErr)
