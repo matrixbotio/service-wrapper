@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 
 	"_/src/controller"
@@ -79,13 +80,81 @@ func filesLinebuf(linebuf []string) []controller.File {
 	return files
 }
 
+func sendSig(sig os.Signal){
+	if cmd == nil {
+		return
+	}
+	cmd.Process.Signal(sig)
+}
+
+func stopProcess(){
+	if !running {
+		return
+	}
+	paused = true
+	running = false
+	sendSig(syscall.SIGSTOP)
+}
+
+func resumeProcess(){
+	if !paused {
+		return
+	}
+	paused = false
+	running = true
+	sendSig(syscall.SIGCONT)
+}
+
+func termProcess(){
+	resumeProcess()
+	sendSig(syscall.SIGTERM)
+}
+
+func killProcess(){
+	resumeProcess()
+	sendSig(syscall.SIGKILL)
+}
+
+func statusButtons() []controller.Button {
+	if running {
+		return []controller.Button{{
+			RMMsgsOnClick: true,
+			Text: "⏸ Пауза",
+			OnClick: stopProcess,
+		}, {
+			RMMsgsOnClick: true,
+			Text: "⏹ Остановить",
+			OnClick: termProcess,
+		}, {
+			RMMsgsOnClick: true,
+			Text: "⛔️ Убить",
+			OnClick: killProcess,
+		}}
+	}
+	if paused {
+		return []controller.Button{{
+			RMMsgsOnClick: true,
+			Text: "▶️ Продолжить",
+			OnClick: resumeProcess,
+		}, {
+			RMMsgsOnClick: true,
+			Text: "⏹ Остановить",
+			OnClick: termProcess,
+		}, {
+			RMMsgsOnClick: true,
+			Text: "⛔️ Убить",
+			OnClick: killProcess,
+		}}
+	}
+	return []controller.Button{}
+}
+
 func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.File {
 	if servicedef.SeparateStdoutStderr {
 		stdoutbuf := make([]string, 0)
 		stderrbuf := make([]string, 0)
 		controller.OnStatusCheck(func() (string, string, []controller.Button, []controller.File) {
-			buttons := []controller.Button{}
-			return state, startTime, buttons, filesStdoutStderr(stdoutbuf, stderrbuf)
+			return state, startTime, statusButtons(), filesStdoutStderr(stdoutbuf, stderrbuf)
 		})
 		promise.All(
 			readData(stdout, func(line string) {
@@ -101,8 +170,7 @@ func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.F
 	} else {
 		linebuf := make([]string, 0)
 		controller.OnStatusCheck(func() (string, string, []controller.Button, []controller.File) {
-			buttons := []controller.Button{}
-			return state, startTime, buttons, filesLinebuf(linebuf)
+			return state, startTime, statusButtons(), filesLinebuf(linebuf)
 		})
 		promise.All(
 			readData(stdout, func(line string) {
