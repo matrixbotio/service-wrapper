@@ -66,8 +66,8 @@ func run() {
 func main() {
 	for{
 		state = "Запуск..."
-		controller.OnStatusCheck(func() (string, string, []controller.File) {
-			return state, startTime, []controller.File{}
+		controller.OnStatusCheck(func() (string, string, []controller.Button, []controller.File) {
+			return state, startTime, []controller.Button{}, []controller.File{}
 		})
 		run()
 	}

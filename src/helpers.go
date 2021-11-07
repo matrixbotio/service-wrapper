@@ -83,8 +83,9 @@ func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.F
 	if servicedef.SeparateStdoutStderr {
 		stdoutbuf := make([]string, 0)
 		stderrbuf := make([]string, 0)
-		controller.OnStatusCheck(func() (string, string, []controller.File) {
-			return state, startTime, filesStdoutStderr(stdoutbuf, stderrbuf)
+		controller.OnStatusCheck(func() (string, string, []controller.Button, []controller.File) {
+			buttons := []controller.Button{}
+			return state, startTime, buttons, filesStdoutStderr(stdoutbuf, stderrbuf)
 		})
 		promise.All(
 			readData(stdout, func(line string) {
@@ -99,8 +100,9 @@ func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.F
 		return filesStdoutStderr(stdoutbuf, stderrbuf)
 	} else {
 		linebuf := make([]string, 0)
-		controller.OnStatusCheck(func() (string, string, []controller.File) {
-			return state, startTime, filesLinebuf(linebuf)
+		controller.OnStatusCheck(func() (string, string, []controller.Button, []controller.File) {
+			buttons := []controller.Button{}
+			return state, startTime, buttons, filesLinebuf(linebuf)
 		})
 		promise.All(
 			readData(stdout, func(line string) {

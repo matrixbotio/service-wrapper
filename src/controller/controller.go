@@ -10,12 +10,12 @@ import (
 	"gopkg.in/tucnak/telebot.v2"
 )
 
-var statusCheckFunc func() (string, string, []File)
+var statusCheckFunc func() (string, string, []Button, []File)
 
 type Button struct {
-	Text         string
+	Text          string
 	RMMsgsOnClick bool
-	OnClick      func()
+	OnClick       func()
 }
 
 type File struct {
@@ -71,20 +71,31 @@ func initBot() *telebot.Bot {
 	})
 	check(err)
 	bot.Handle("/status", func(m *telebot.Message) {
-		state, startTime, files := statusCheckFunc()
+		messagesToDelete := []*telebot.Message{}
+		state, startTime, buttons, files := statusCheckFunc()
 		messageText := fmt.Sprintf("<b>Статус сервиса:</b> %s\n", txtToHtml(state))
 		if startTime != "" {
 			messageText += fmt.Sprintf("<b>Работает с %s</b>\n", startTime)
 		}
-		sendOpts := &telebot.SendOptions{
-			ParseMode: "HTML",
-		}
+		keyboard := buttonsToTelebotKeyboard(buttons, func() []*telebot.Message {
+			return messagesToDelete
+		}, bot)
 		if len(files) == 0 {
-			bot.Send(chat, messageText + "<b>Сервис не выводил ничего в stdout/stderr</b>", sendOpts)
-		} else {
-			bot.SendAlbum(chat, filesToTelebotAlbum(files, messageText), sendOpts)
+			messageText += "<b>Сервис не выводил ничего в stdout/stderr</b>"
 		}
-		bot.Delete(m)
+		msg, _ := bot.Send(chat, messageText, &telebot.SendOptions{
+			ParseMode:   "HTML",
+			ReplyMarkup: keyboard,
+		})
+		messagesToDelete = append(messagesToDelete, msg)
+		if len(files) != 0 {
+			msgs, _ := bot.SendAlbum(chat, filesToTelebotAlbum(files, messageText), &telebot.SendOptions{
+				ReplyTo: msg,
+			})
+			for i := 0; i < len(msgs); i++ {
+				messagesToDelete = append(messagesToDelete, &msgs[i])
+			}
+		}
 	})
 	go bot.Start()
 	return bot
@@ -92,7 +103,7 @@ func initBot() *telebot.Bot {
 
 var bot = initBot()
 
-func buttonsToTelebotKeyboard(buttons []Button, getMessagesToDelete func() []*telebot.Message) *telebot.ReplyMarkup {
+func buttonsToTelebotKeyboard(buttons []Button, getMessagesToDelete func() []*telebot.Message, bot *telebot.Bot) *telebot.ReplyMarkup {
 	menu := &telebot.ReplyMarkup{}
 	rows := []telebot.Row{}
 	for i := 0; i < len(buttons); i++ {
@@ -118,7 +129,7 @@ func Send(text string, buttons []Button, files ...File) {
 	messagesToDelete := []*telebot.Message{}
 	keyboard := buttonsToTelebotKeyboard(buttons, func() []*telebot.Message {
 		return messagesToDelete
-	})
+	}, bot)
 	msg, _ := bot.Send(chat, text, &telebot.SendOptions{
 		ParseMode:   "HTML",
 		ReplyMarkup: keyboard,
@@ -132,6 +143,6 @@ func Send(text string, buttons []Button, files ...File) {
 	}
 }
 
-func OnStatusCheck(check func() (string, string, []File)) {
+func OnStatusCheck(check func() (string, string, []Button, []File)) {
 	statusCheckFunc = check
 }
