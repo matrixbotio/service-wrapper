@@ -18,6 +18,7 @@ var running = false
 var paused = false
 
 func awaitRestartCommand(text string, files ...controller.File) {
+	cmd = nil
 	promise.New(func(resolve func(v promise.Any), reject func(error)) {
 		controller.Send(text, []controller.Button{
 			{
