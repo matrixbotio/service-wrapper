@@ -3,10 +3,13 @@ package main
 import (
 	"net/http"
 	"os"
+	"time"
 )
 
 func healthcheck() {
-	var client http.Client
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
 	resp, err := client.Get("http://localhost/health")
 	if err != nil {
 		println(err)
