@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
 
@@ -69,7 +70,14 @@ func run() {
 	awaitRestartCommand(state, files...)
 }
 
+
+
 func main() {
+	if os.Args[1] == "--health" {
+		healthcheck()
+		return
+	}
+
 	for{
 		state = "Запуск..."
 		controller.OnStatusCheck(func() (string, string, []controller.Button, []controller.File) {
