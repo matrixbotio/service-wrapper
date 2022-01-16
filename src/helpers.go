@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"_/src/controller"
-	"_/src/servicedef"
 
 	"github.com/chebyrash/promise"
 )
@@ -55,13 +54,13 @@ func filesStdoutStderr(stdoutbuf []string, stderrbuf []string) []controller.File
 	stderr := strings.Join(stderrbuf, "\n")
 	if len(stdout) > 0 {
 		files = append(files, controller.File{
-			Name: servicedef.ServiceName + " — " + timestr + ".stdout.txt",
+			Name: processDef.ServiceName + " — " + timestr + ".stdout.txt",
 			Content: strings.Join(stdoutbuf, "\n"),
 		})
 	}
 	if len(stderr) > 0 {
 		files = append(files, controller.File{
-			Name: servicedef.ServiceName + " — " + timestr + ".stderr.txt",
+			Name: processDef.ServiceName + " — " + timestr + ".stderr.txt",
 			Content: strings.Join(stderrbuf, "\n"),
 		})
 	}
@@ -73,7 +72,7 @@ func filesLinebuf(linebuf []string) []controller.File {
 	output := strings.Join(linebuf, "\n")
 	if len(output) > 0 {
 		files = append(files, controller.File{
-			Name: servicedef.ServiceName + " — " + time.Now().Format(timeFormat) + ".output.txt",
+			Name: processDef.ServiceName + " — " + time.Now().Format(timeFormat) + ".output.txt",
 			Content: strings.Join(linebuf, "\n"),
 		})
 	}
@@ -150,7 +149,7 @@ func statusButtons() []controller.Button {
 }
 
 func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.File {
-	if servicedef.SeparateStdoutStderr {
+	if processDef.SeparateStdoutStderr {
 		stdoutbuf := make([]string, 0)
 		stderrbuf := make([]string, 0)
 		controller.OnStatusCheck(func() (string, string, []controller.Button, []controller.File) {
@@ -159,11 +158,11 @@ func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.F
 		promise.All(
 			readData(stdout, func(line string) {
 				os.Stdout.WriteString(line + "\n")
-				stdoutbuf = appendToLimitedArr(stdoutbuf, line, servicedef.LinesToPreserve)
+				stdoutbuf = appendToLimitedArr(stdoutbuf, line, processDef.LinesToPreserve)
 			}),
 			readData(stderr, func(line string) {
 				os.Stderr.WriteString(line + "\n")
-				stderrbuf = appendToLimitedArr(stderrbuf, line, servicedef.LinesToPreserve)
+				stderrbuf = appendToLimitedArr(stderrbuf, line, processDef.LinesToPreserve)
 			}),
 		).Await()
 		return filesStdoutStderr(stdoutbuf, stderrbuf)
@@ -175,11 +174,11 @@ func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.F
 		promise.All(
 			readData(stdout, func(line string) {
 				os.Stdout.WriteString(line + "\n")
-				linebuf = appendToLimitedArr(linebuf, line, servicedef.LinesToPreserve)
+				linebuf = appendToLimitedArr(linebuf, line, processDef.LinesToPreserve)
 			}),
 			readData(stderr, func(line string) {
 				os.Stderr.WriteString(line + "\n")
-				linebuf = appendToLimitedArr(linebuf, line, servicedef.LinesToPreserve)
+				linebuf = appendToLimitedArr(linebuf, line, processDef.LinesToPreserve)
 			}),
 		).Await()
 		return filesLinebuf(linebuf)

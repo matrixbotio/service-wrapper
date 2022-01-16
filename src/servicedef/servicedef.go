@@ -12,7 +12,7 @@ func check(e error) {
 	}
 }
 
-type processDef struct {
+type ProcessDef struct {
 	ServiceName string `yaml:"service_name"`
 	LinesToPreserve int `yaml:"lines_to_preserve"`
 	SeparateStdoutStderr bool `yaml:"separate_stdout_stderr"`
@@ -20,20 +20,11 @@ type processDef struct {
 	Args []string `yaml:"args"`
 }
 
-func getProcessDefinition() processDef {
-	pdef := processDef{}
+func GetProcessDefinition() ProcessDef {
+	pdef := ProcessDef{}
 	yamlData, err := os.ReadFile(os.Args[1])
 	check(err)
 	err = yaml.Unmarshal([]byte(yamlData), &pdef)
 	check(err)
 	return pdef
 }
-
-var def = getProcessDefinition()
-
-// exported
-var ServiceName = def.ServiceName
-var LinesToPreserve = def.LinesToPreserve
-var SeparateStdoutStderr = def.SeparateStdoutStderr
-var Command = def.Command
-var Args = def.Args
