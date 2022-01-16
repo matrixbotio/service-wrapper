@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"net/http"
 	"os"
 )
@@ -15,11 +14,8 @@ func healthcheck() {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		_, err := io.ReadAll(resp.Body)
-		if err != nil {
-			println(err)
-			os.Exit(1)
-		}
+	if resp.StatusCode != http.StatusOK {
+		println("Invalid HTTP status")
+		os.Exit(1)
 	}
 }
