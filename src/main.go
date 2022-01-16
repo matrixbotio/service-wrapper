@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
 
@@ -16,6 +17,7 @@ var cmd *exec.Cmd
 var startTime = ""
 var running = false
 var paused = false
+var processDef servicedef.ProcessDef
 
 func awaitRestartCommand(text string, files ...controller.File) {
 	cmd = nil
@@ -33,7 +35,7 @@ func awaitRestartCommand(text string, files ...controller.File) {
 }
 
 func run() {
-	cmd = exec.Command(servicedef.Command, servicedef.Args...)
+	cmd = exec.Command(processDef.Command, processDef.Args...)
 	stdout, stdoutPipeErr := cmd.StdoutPipe()
 	if stdoutPipeErr != nil {
 		state = fmt.Sprintf("Не удаётся передать stdout: %v", stdoutPipeErr)
@@ -70,6 +72,14 @@ func run() {
 }
 
 func main() {
+	if os.Args[1] == "--health" {
+		healthcheck()
+		return
+	}
+
+	processDef = servicedef.GetProcessDefinition()
+	controller.Init()
+
 	for{
 		state = "Запуск..."
 		controller.OnStatusCheck(func() (string, string, []controller.Button, []controller.File) {
