@@ -78,6 +78,7 @@ func main() {
 	}
 
 	processDef = servicedef.GetProcessDefinition()
+	controller.Init()
 
 	for{
 		state = "Запуск..."

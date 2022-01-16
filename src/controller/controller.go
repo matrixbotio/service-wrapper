@@ -46,7 +46,7 @@ func getChatInt64() int64 {
 	return i
 }
 
-var chatIdInt64 = getChatInt64()
+var chatIdInt64 int64
 
 func txtToHtml(text string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(text, "&", "&amp;"), "<", "&lt;"), ">", "&gt;")
@@ -113,7 +113,7 @@ func initBot() *telebot.Bot {
 	return bot
 }
 
-var bot = initBot()
+var bot *telebot.Bot
 
 func buttonsToTelebotKeyboard(buttons []Button, getMessagesToDelete func() []*telebot.Message, bot *telebot.Bot) *telebot.ReplyMarkup {
 	menu := &telebot.ReplyMarkup{}
@@ -157,4 +157,9 @@ func Send(text string, buttons []Button, files ...File) {
 
 func OnStatusCheck(check func() (string, string, []Button, []File)) {
 	statusCheckFunc = check
+}
+
+func Init() {
+	chatIdInt64 = getChatInt64()
+	bot = initBot()
 }
