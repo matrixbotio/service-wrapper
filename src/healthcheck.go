@@ -10,7 +10,7 @@ func healthcheck() {
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
-	resp, err := client.Get("http://localhost/health")
+	resp, err := client.Get("http://localhost:8080/health")
 	if err != nil {
 		println(err)
 		os.Exit(1)
