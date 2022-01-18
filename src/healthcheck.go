@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -10,15 +11,20 @@ func healthcheck() {
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
+	print("localhost GET 8080 /heath ")
+	start := time.Now().UnixMilli()
 	resp, err := client.Get("http://localhost:8080/health")
+	ms := strconv.FormatInt(time.Now().UnixMilli() - start, 10) + "ms"
 	if err != nil {
-		println(err)
+		println("-1 " + ms)
+		println(err.Error())
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
 
+	println(strconv.Itoa(resp.StatusCode) + " " + ms)
+
 	if resp.StatusCode != http.StatusOK {
-		println("Invalid HTTP status")
 		os.Exit(1)
 	}
 }
