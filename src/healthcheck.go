@@ -11,7 +11,7 @@ func healthcheck() {
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
-	print("localhost GET 8080 /heath ")
+	print("localhost GET 8080 /health ")
 	start := time.Now().UnixMilli()
 	resp, err := client.Get("http://localhost:8080/health")
 	ms := strconv.FormatInt(time.Now().UnixMilli() - start, 10) + "ms"
