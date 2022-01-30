@@ -11,6 +11,10 @@ func healthcheck() {
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
+	if isProcessStoppedByWrapper() {
+		println("process is stopped by wrapper")
+		return
+	}
 	print("localhost GET 8080 /health ")
 	start := time.Now().UnixMilli()
 	resp, err := client.Get("http://localhost:8080/health")
