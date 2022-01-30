@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"os"
 	"strings"
@@ -13,6 +14,7 @@ import (
 )
 
 var timeFormat = "2006-01-02 15:04:05"
+var stoppedFile = "/wrapper-process-stopped"
 
 func appendToLimitedArr(arr []string, str string, count int) []string {
 	if len(arr) > count - 1 {
@@ -86,12 +88,26 @@ func sendSig(sig os.Signal){
 	cmd.Process.Signal(sig)
 }
 
+func notifyExternalProcessesStopped(){
+	os.OpenFile(stoppedFile, os.O_RDONLY | os.O_CREATE, 0666)
+}
+
+func notifyExternalProcessesStarted(){
+	os.Remove(stoppedFile)
+}
+
+func isProcessStoppedByWrapper() bool {
+	_, err := os.Stat(stoppedFile)
+	return errors.Is(err, os.ErrNotExist)
+}
+
 func stopProcess(){
 	if !running {
 		return
 	}
 	paused = true
 	running = false
+	notifyExternalProcessesStopped()
 	sendSig(syscall.SIGSTOP)
 }
 
@@ -106,11 +122,13 @@ func resumeProcess(){
 
 func termProcess(){
 	resumeProcess()
+	notifyExternalProcessesStopped()
 	sendSig(syscall.SIGTERM)
 }
 
 func killProcess(){
 	resumeProcess()
+	notifyExternalProcessesStopped()
 	sendSig(syscall.SIGKILL)
 }
 

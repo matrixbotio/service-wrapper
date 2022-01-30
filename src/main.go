@@ -56,6 +56,7 @@ func run() {
 	}
 	state = "Запущен"
 	running = true
+	notifyExternalProcessesStarted()
 	startTime = time.Now().Format(timeFormat)
 	files := readStdoutStderr(stdout, stderr)
 	waitErr := cmd.Wait()
