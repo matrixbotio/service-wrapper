@@ -1,16 +1,18 @@
 package main
 
 import (
+	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 )
 
+var client = http.Client{
+	Timeout: 5 * time.Second,
+}
+
 func healthcheck() {
-	client := http.Client{
-		Timeout: 5 * time.Second,
-	}
 	if isProcessStoppedByWrapper() {
 		println("process is stopped by wrapper")
 		return
@@ -18,13 +20,19 @@ func healthcheck() {
 	print("localhost GET 8080 /health ")
 	start := time.Now().UnixMilli()
 	resp, err := client.Get("http://localhost:8080/health")
-	ms := strconv.FormatInt(time.Now().UnixMilli() - start, 10) + "ms"
+	ms := strconv.FormatInt(time.Now().UnixMilli()-start, 10) + "ms"
 	if err != nil {
 		println("-1 " + ms)
 		println(err.Error())
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			println(err.Error())
+			os.Exit(1)
+		}
+	}(resp.Body)
 
 	println(strconv.Itoa(resp.StatusCode) + " " + ms)
 

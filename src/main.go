@@ -17,6 +17,7 @@ var cmd *exec.Cmd
 var startTime = ""
 var running = false
 var paused = false
+var stopped = false
 var processDef servicedef.ProcessDef
 
 func awaitRestartCommand(text string, files ...controller.File) {
@@ -24,7 +25,7 @@ func awaitRestartCommand(text string, files ...controller.File) {
 	promise.New(func(resolve func(v promise.Any), reject func(error)) {
 		controller.Send(text, []controller.Button{
 			{
-				Text:         "🔄 Рестарт",
+				Text:          "🔄 Рестарт",
 				RMMsgsOnClick: true,
 				OnClick: func() {
 					resolve(nil)
@@ -81,7 +82,7 @@ func main() {
 	processDef = servicedef.GetProcessDefinition()
 	controller.Init()
 
-	for{
+	for {
 		state = "Запуск..."
 		controller.OnStatusCheck(func() (string, string, []controller.Button, []controller.File) {
 			return state, startTime, []controller.Button{}, []controller.File{}
