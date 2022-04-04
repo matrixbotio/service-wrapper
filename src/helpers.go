@@ -14,7 +14,7 @@ import (
 )
 
 var timeFormat = "2006-01-02 15:04:05"
-var stoppedFile = "~/wrapper-process-stopped"
+var stoppedFile = "wrapper-process-stopped"
 
 func appendToLimitedArr(arr []string, str string, count int) []string {
 	if len(arr) > count-1 {
@@ -113,6 +113,9 @@ func notifyExternalProcessesStopped() {
 func notifyExternalProcessesStarted() {
 	err := os.Remove(stoppedFile)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return
+		}
 		controller.Send("Error on healthcheck notify: "+err.Error(), []controller.Button{
 			{
 				Text:          "👌 Ok",
