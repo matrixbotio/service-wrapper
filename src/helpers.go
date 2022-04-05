@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"os/user"
 	"strings"
 	"syscall"
 	"time"
@@ -98,7 +99,11 @@ func sendSig(sig os.Signal) {
 }
 
 func notifyExternalProcessesStopped() {
-	_, err := os.OpenFile(stoppedFile, os.O_RDONLY|os.O_CREATE, 0666)
+	fileName, err := getStoppedFile()
+	if err != nil {
+		sendError("Error on healthcheck notify: " + err.Error())
+	}
+	_, err = os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		controller.Send("Error on healthcheck notify: "+err.Error(), []controller.Button{
 			{
@@ -111,23 +116,25 @@ func notifyExternalProcessesStopped() {
 }
 
 func notifyExternalProcessesStarted() {
-	err := os.Remove(stoppedFile)
+	fileName, err := getStoppedFile()
+	if err != nil {
+		sendError("Error on healthcheck notify: " + err.Error())
+	}
+	err = os.Remove(fileName)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return
 		}
-		controller.Send("Error on healthcheck notify: "+err.Error(), []controller.Button{
-			{
-				Text:          "👌 Ok",
-				RMMsgsOnClick: true,
-				OnClick:       func() {},
-			},
-		})
+		sendError("Error on healthcheck notify: " + err.Error())
 	}
 }
 
 func isProcessStoppedByWrapper() bool {
-	_, err := os.Stat(stoppedFile)
+	fileName, err := getStoppedFile()
+	if err != nil {
+		sendError("Error on healthcheck notify: " + err.Error())
+	}
+	_, err = os.Stat(fileName)
 	return errors.Is(err, os.ErrNotExist)
 }
 
@@ -231,4 +238,23 @@ func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.F
 		).Await()
 		return filesLinebuf(linebuf)
 	}
+}
+
+func getStoppedFile() (string, error) {
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	dir := usr.HomeDir
+	return dir + "/" + stoppedFile, nil
+}
+
+func sendError(err string) {
+	controller.Send(err, []controller.Button{
+		{
+			Text:          "👌 Ok",
+			RMMsgsOnClick: true,
+			OnClick:       func() {},
+		},
+	})
 }
