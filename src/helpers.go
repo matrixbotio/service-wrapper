@@ -98,7 +98,7 @@ func notifyExternalProcessesStarted(){
 
 func isProcessStoppedByWrapper() bool {
 	_, err := os.Stat(stoppedFile)
-	return errors.Is(err, os.ErrNotExist)
+	return !errors.Is(err, os.ErrNotExist)
 }
 
 func stopProcess(){
@@ -118,6 +118,7 @@ func resumeProcess(){
 	paused = false
 	running = true
 	sendSig(syscall.SIGCONT)
+	notifyExternalProcessesStarted()
 }
 
 func termProcess(){
@@ -202,3 +203,4 @@ func readStdoutStderr(stdout io.ReadCloser, stderr io.ReadCloser) []controller.F
 		return filesLinebuf(linebuf)
 	}
 }
+
